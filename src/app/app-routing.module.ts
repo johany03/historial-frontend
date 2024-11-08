@@ -20,6 +20,15 @@ const routes: Routes = [
         loadComponent:  () => import('./core/components/pages/mypage/mypage.component').then((m) => m.MypageComponent),
       },
     ]
+  },
+  {
+    path: 'gestion',
+    component: AppLayoutComponent,
+    children: [
+      { path: 'historial-transito',
+        loadComponent:  () => import('./core/components/pages/historial-transito/historial-transito.component').then((m) => m.HistorialTransitoComponent),
+      },
+    ]
   }
 ];
 
