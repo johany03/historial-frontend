@@ -1,55 +1,136 @@
 <div class="card">
   <p-toast></p-toast>
+  <p-confirmDialog [style]="{width: '25vw'}"></p-confirmDialog>
   <p-toolbar styleClass="mb-4 gap-2">
       <ng-template pTemplate="left">
-          <button pButton pRipple label="New" icon="pi pi-plus" class="p-button-success mr-2" ></button>
+          <button pButton pRipple label="New" icon="pi pi-plus" class="p-button-success mr-2" (click)="openNew()" ></button>
       </ng-template>
 
       <ng-template pTemplate="right">
-          <p-fileUpload mode="basic" accept="image/*" [maxFileSize]="1000000" label="Import" chooseLabel="Import" class="mr-2 inline-block"></p-fileUpload>
+          <p-fileUpload
+            #fileUploader
+            mode="basic"
+            accept=".xls, .xlsx"
+            [maxFileSize]="1000000"
+            chooseLabel="Import"
+            class="mr-2 inline-block"
+            (onSelect)="onFileImport($event, fileUploader)"></p-fileUpload>
           <button pButton pRipple label="Export" icon="pi pi-upload" class="p-button-help"></button>
       </ng-template>
   </p-toolbar>
 
   <p-table
       #dt
-      [value]="products"
+      [value]="data"
       [rows]="10"
       [paginator]="true"
-      [globalFilterFields]="['name', 'country.name', 'representative.name', 'status']"
+      [totalRecords]="totalRecords"
+      [loading]="loading"
+      [globalFilterFields]="['placas', 'recibe', 'fecha_de_entrega', 'quien_entrega', 'tramite', 'observaciones', 'fecha_de_archivo', 'archivo']"
       [tableStyle]="{ 'min-width': '75rem' }"
       [rowHover]="true"
       dataKey="id"
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} entries"
       [showCurrentPageReport]="true"
+      [lazy]="true"
+      (onLazyLoad)="loadTable($event)"
   >
       <ng-template pTemplate="caption">
           <div class="flex align-items-center justify-content-between">
-              <h5 class="m-0">Manage Products</h5>
+              <h5 class="m-0">Historial de transito</h5>
               <span class="p-input-icon-left">
                   <i class="pi pi-search"></i>
-                  <input pInputText type="text"  placeholder="Search..." />
+                  <input
+                    pInputText
+                    type="text"
+                    placeholder="Search..."
+                    class="p-inputtext p-component p-element w-full"
+                    (input)="dt.filterGlobal($any($event.target).value, 'contains')" />
               </span>
           </div>
       </ng-template>
       <ng-template pTemplate="header">
           <tr>
-              <th pSortableColumn="name" style="min-width:15rem">Name <p-sortIcon field="name"></p-sortIcon></th>
-              <th pSortableColumn="price">Price <p-sortIcon field="price"></p-sortIcon></th>
-              <th pSortableColumn="category" style="min-width:10rem">Category <p-sortIcon field="category"></p-sortIcon></th>
+              <th pSortableColumn="placas" style="min-width:10rem">Placas <p-sortIcon field="placas"></p-sortIcon></th>
+              <th pSortableColumn="recibe">Recibe <p-sortIcon field="recibe"></p-sortIcon></th>
+              <th pSortableColumn="fecha_de_entrega" style="min-width:10rem">Fecha de entrega<p-sortIcon field="fecha_de_entrega"></p-sortIcon></th>
+              <th pSortableColumn="quien_entrega" style="min-width:10rem">Quien entrega<p-sortIcon field="quien_entrega"></p-sortIcon></th>
+              <th pSortableColumn="tramite" style="min-width:10rem">Tramite<p-sortIcon field="tramite"></p-sortIcon></th>
+              <th pSortableColumn="observaciones" style="min-width:15rem">Observaciones<p-sortIcon field="observaciones"></p-sortIcon></th>
+              <th pSortableColumn="fecha_de_archivo" style="min-width:10rem">Fecha de archivo<p-sortIcon field="fecha_de_archivo"></p-sortIcon></th>
+              <th pSortableColumn="archivo" style="min-width:10rem">Archivo<p-sortIcon field="archivo"></p-sortIcon></th>
+              <th style="min-width:10rem">Acciones</th>
               <th></th>
           </tr>
       </ng-template>
-      <ng-template pTemplate="body" let-product>
+      <ng-template pTemplate="body" let-transito>
           <tr>
-              <td>{{ product.name }}</td>
-              <td>{{ product.price | currency: 'USD' }}</td>
-              <td>{{ product.category }}</td>
+              <td>{{ transito.placas }}</td>
+              <td>{{ transito.recibe}}</td>
+              <td>{{ transito.fecha_de_entrega }}</td>
+              <td>{{ transito.quien_entrega }}</td>
+              <td>{{ transito.tramite }}</td>
+              <td>{{ transito.observaciones }}</td>
+              <td>{{ transito.fecha_de_archivo }}</td>
+              <td>{{ transito.archivo }}</td>
               <td>
-                  <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" ></button>
-                  <button pButton pRipple icon="pi pi-trash" class="p-button-rounded p-button-warning"></button>
+                  <button pButton pRipple icon="pi pi-pencil" class="p-button-rounded p-button-success mr-2" (click)="editCarpeta(transito)"></button>
+                  <button pButton  icon="pi pi-trash" class="p-button-rounded p-button-warning" (click)="deleteCarpeta(transito.id)"></button>
               </td>
           </tr>
       </ng-template>
   </p-table>
 </div>
+
+<p-dialog [(visible)]="historialTransitoDialog" [style]="{ width: '520px' }" header="Historial de tránsito" [modal]="true" styleClass="p-fluid">
+    <ng-template pTemplate="content">
+      <form [formGroup]="historialTransitoForm">
+        <div class="field">
+          <label for="placas">Placas</label>
+          <input type="text" pInputText id="placas" formControlName="placas" required />
+          <small class="p-error" *ngIf="submitted && historialTransitoForm.get('placas')?.invalid">Placas is required.</small>
+        </div>
+        <div class="field">
+          <label for="recibe">Recibe</label>
+          <input type="text" pInputText id="recibe" formControlName="recibe" required />
+          <small class="p-error" *ngIf="submitted && historialTransitoForm.get('recibe')?.invalid">Recibe is required.</small>
+        </div>
+        <div class="field">
+          <label for="fecha_de_entrega">Fecha de Entrega</label>
+          <p-calendar id="fecha_de_entrega" formControlName="fecha_de_entrega" [showIcon]="true" ></p-calendar>
+          <small class="p-error" *ngIf="submitted && historialTransitoForm.get('fecha_de_entrega')?.invalid">Fecha de Entrega is required.</small>
+        </div>
+        <div class="field">
+          <label for="quien_entrega">Quién Entrega</label>
+          <input type="text" pInputText id="quien_entrega" formControlName="quien_entrega" required />
+          <small class="p-error" *ngIf="submitted && historialTransitoForm.get('quien_entrega')?.invalid">Quién Entrega is required.</small>
+        </div>
+        <div class="field">
+            <label for="quien_entrega">Trámite</label>
+            <input type="text" pInputText id="tramite" formControlName="tramite" required />
+            <small class="p-error" *ngIf="submitted && historialTransitoForm.get('tramite')?.invalid">Quién Entrega is required.</small>
+          </div>
+        <div class="field">
+          <label for="observaciones">Observaciones</label>
+          <textarea rows="5" cols="30" pInputTextarea formControlName="observaciones"></textarea>
+          <small class="p-error" *ngIf="submitted && historialTransitoForm.get('observaciones')?.invalid">Quién Entrega is required.</small>
+        </div>
+        <div class="field">
+          <label for="fecha_de_archivo">Fecha de Archivo</label>
+          <p-calendar id="fecha_de_archivo" formControlName="fecha_de_archivo" [showIcon]="true" ></p-calendar>
+          <small class="p-error" *ngIf="submitted && historialTransitoForm.get('fecha_de_archivo')?.invalid">Fecha de Archivo is required.</small>
+        </div>
+        <div class="field">
+          <label for="archivo">Archivo</label>
+          <input type="text" pInputText id="archivo" formControlName="archivo" required />
+          <small class="p-error" *ngIf="submitted && historialTransitoForm.get('archivo')?.invalid">Archivo is required.</small>
+        </div>
+      </form>
+    </ng-template>
+
+    <ng-template pTemplate="footer">
+      <button pButton pRipple label="Cancel" icon="pi pi-times" class="p-button-text" (click)="hideDialog()"></button>
+      <button pButton pRipple label="Save" icon="pi pi-check" class="p-button-text" (click)="saveHistorial()"></button>
+    </ng-template>
+  </p-dialog>
+
