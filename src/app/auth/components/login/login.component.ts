@@ -56,23 +56,28 @@ export class LoginComponent implements OnInit {
       });
     }
 
-    login():void {
-      console.log(this.loginForm);
+    login(): void {
       if (this.loginForm.invalid) {
         return;
       }
       const data = this.loginForm.value;
-      if(this.loginForm.valid) {
-         this.authService.login(data.email, data.password).subscribe(
-           (res: any) => {
-             this.authService.saveToken(res.access_token, "");
-             this.router.navigate(['/main']);
-           },
-           (err: any) => {
-            console.log(err);
-            this.messageService.add({ severity: 'info', summary: 'Info', detail: err.error.error });
-           }
-         );
+      if (this.loginForm.valid) {
+        this.authService.login(data.email, data.password).subscribe(
+          (res: any) => {
+            this.authService.saveToken(res.access_token, "");
+            this.router.navigate(['/main']);
+          },
+          (err: any) => {
+            console.error(err); // Para depuración
+            const errorMessage =
+              err?.error?.error || 'Ocurrió un error inesperado. Inténtalo nuevamente.';
+            this.messageService.add({
+              severity: 'error',
+              summary: 'Error',
+              detail: errorMessage,
+            });
+          }
+        );
       }
     }
 

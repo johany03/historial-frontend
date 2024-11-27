@@ -26,12 +26,6 @@ export class AppMenuComponent implements OnInit {
                     { label: 'Historial de Transito', icon: 'pi pi-fw pi-id-card', routerLink: ['/gestion/historial-transito'] },
                 ]
             },
-            {
-                label: 'Importador',
-                items: [
-                    { label: 'Importador', icon: 'pi pi-fw pi-user', routerLink: ['/uikit/formlayout'] },
-                ]
-            },
         ];
     }
 }
