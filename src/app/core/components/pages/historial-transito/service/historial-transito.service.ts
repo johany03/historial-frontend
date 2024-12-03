@@ -33,6 +33,18 @@ export class HistorialTransitoService {
     return this.http.post(`${this.url}historial-transito/import` , formData);
   }
 
+  export() {
+    return this.http.post(`${this.url}historial-transito/export`,{}, { responseType: 'blob' })
+      .subscribe((res: Blob) => {
+      const blob = new Blob([res], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'historial_transito.xlsx';
+      link.click();
+    });
+  }
+
   save(data: any) {
     return this.http.post<HistorialTransitoModel>(`${this.url}historial-transito`, data);
   }
