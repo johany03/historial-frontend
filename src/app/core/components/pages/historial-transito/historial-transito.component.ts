@@ -235,4 +235,8 @@ export class HistorialTransitoComponent implements OnInit {
     const day = String(d.getDate()).padStart(2, '0');
     return `${year}-${month}-${day}`;
   }
+
+  export(){
+    this.historialTransitoService.export();
+  }
 }

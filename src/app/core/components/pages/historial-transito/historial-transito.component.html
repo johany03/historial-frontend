@@ -15,7 +15,7 @@
             chooseLabel="Import"
             class="mr-2 inline-block"
             (onSelect)="onFileImport($event, fileUploader)"></p-fileUpload>
-          <button pButton pRipple label="Export" icon="pi pi-upload" class="p-button-help"></button>
+          <button pButton pRipple label="Export" icon="pi pi-upload" class="p-button-help" (click)="export()"></button>
       </ng-template>
   </p-toolbar>
 
